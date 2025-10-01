@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nature‑as‑Infrastructure Draft — Coastal Ecosystems</title>
+<style>
+  :root{ --bg:#0f172a; --panel:#0b1224; --edge:#1f2a44; --text:#e5e7eb; --muted:#9ca3af; --accent:#22d3ee; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444 }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:radial-gradient(1200px 600px at 60% 10%, #1f2937 0%, #0b1022 60%, #050816 100%); color:var(--text)}
+  header{display:flex; gap:12px; align-items:center; padding:16px 20px; border-bottom:1px solid #1f2937}
+  header h1{font-size:20px; margin:0}
+  header .pill{border:1px solid #334155; padding:6px 10px; border-radius:999px; color:var(--muted); font-size:12px}
+
+  .wrap{display:grid; grid-template-columns:340px 1fr; gap:16px; padding:16px}
+  .panel{background:linear-gradient(180deg,#0e1328,#0b1224); border:1px solid var(--edge); border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .panel h2{font-size:16px; margin:0 0 8px 0; color:#cbd5e1}
+  .control{background:#0a1326; border:1px solid var(--edge); border-radius:12px; padding:12px; margin-bottom:12px}
+  .control label{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px}
+  .control input[type=range]{width:100%}
+
+  .deck{display:grid; grid-template-columns:1fr; gap:10px; max-height:380px; overflow:auto; padding-right:4px}
+  .card{display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; background:#0a1222; border:1px solid #203352; border-radius:12px; padding:10px; cursor:grab}
+  .card .emoji{font-size:22px}
+  .card h3{margin:0; font-size:14px; color:#e2e8f0}
+  .card small{display:block; color:#9fb0c9}
+  .chip{border:1px solid #334155; border-radius:999px; padding:2px 8px; font-size:11px; color:#cbd5e1}
+  .cost{color:#93c5fd; font-weight:700; font-size:13px}
+
+  .board{background:linear-gradient(180deg,#061022 0%, #06162c 100%); border:1px solid var(--edge); border-radius:16px; padding:16px; display:grid; gap:12px; grid-template-rows:auto auto 1fr auto}
+  .hud{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+  .badge{border:1px solid var(--edge); padding:6px 10px; border-radius:999px; color:#cbd5e1; font-size:12px}
+
+  .zones{display:grid; grid-template-columns:repeat(5, 1fr); gap:12px}
+  .zone{position:relative; background:#0a1222; border:1px dashed #334155; border-radius:14px; padding:12px; min-height:160px}
+  .zone h4{margin:0 0 8px 0; font-size:13px; color:#93c5fd}
+  .zone .slot{display:flex; gap:8px; align-items:center; padding:8px; border:1px solid #203352; border-radius:10px; margin-bottom:8px; background:#091427}
+  .zone .slot .icon{font-size:20px}
+  .zone .slot .name{font-size:13px}
+  .zone .slot .small{font-size:11px; color:#9fb0c9}
+
+  .footer{display:flex; gap:10px; align-items:center}
+  .btn{background:#0ea5e9; border:none; padding:10px 12px; color:white; border-radius:10px; cursor:pointer; font-weight:700}
+  .btn.secondary{background:#0b1224; border:1px solid #1f2a44; color:#e2e8f0}
+
+  .meters{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .meter{display:grid; gap:4px}
+  .meter label{font-size:12px; color:#cbd5e1}
+  .barWrap{width:220px; height:12px; border-radius:999px; border:1px solid #1f2a44; background:#0a1326; overflow:hidden}
+  .barFill{height:100%; width:0%; background:linear-gradient(90deg,#22c55e,#16a34a)}
+
+  table{width:100%; border-collapse:collapse; font-size:12px; color:#e2e8f0}
+  th,td{border:1px solid #1f2a44; padding:6px; text-align:left}
+  th{background:#0a1326}
+
+  .log{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; color:#a5b4fc; background:#0b1224; border:1px solid #1f2a44; border-radius:10px; padding:10px; height:120px; overflow:auto}
+
+  /* highlight the card that’s selected for click-to-place */
+  .card.selected{
+    border-color:#22d3ee !important;
+    box-shadow:0 0 0 2px rgba(34,211,238,.25) inset, 0 0 0 1px #22d3ee;
+  }
+
+
+  .constraint{font-size:11px;color:#9ca3af;margin-top:2px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>🌿 Nature‑as‑Infrastructure Draft</h1>
+    <span class="pill">Assemble a hybrid shoreline. <strong>Tip:</strong> Click a card, then click a zone to place (tap on phones). Constraints shown on cards.</span>
+  </header>
+
+  <div class="wrap">
+    <aside class="panel">
+      <h2>Site constraints</h2>
+      <div class="control">
+        <label for="light"><span>Light / Turbidity (0=very turbid, 100=clear)</span><span id="lightVal">70</span></label>
+        <input id="light" type="range" min="0" max="100" step="5" value="70" />
+      </div>
+      <div class="control">
+        <label for="sal"><span>Salinity (PSU)</span><span id="salVal">25</span></label>
+        <input id="sal" type="range" min="0" max="35" step="1" value="25" />
+      </div>
+      <div class="control">
+        <label for="inun"><span>Inundation level</span><span id="inunVal">Intertidal</span></label>
+        <input id="inun" type="range" min="0" max="2" step="1" value="1" />
+        <small style="color:var(--muted)">0=Offshore, 1=Intertidal, 2=Backshore</small>
+      </div>
+      <div class="control">
+        <label for="width"><span>Available corridor width (m)</span><span id="widthVal">60</span></label>
+        <input id="width" type="range" min="10" max="150" step="5" value="60" />
+      </div>
+
+      <h2>Deck</h2>
+      <div class="deck" id="deck"></div>
+    </aside>
+
+    <main class="board">
+      <div class="hud">
+        <span class="badge" id="budgetBadge">Budget: 120</span>
+        <span class="badge">Goal: ≥ <strong id="targetAtt">40%</strong> wave reduction, ≤ <strong id="targetBudget">120</strong> budget</span>
+        <span class="badge" id="compatNote">Playable cards respect constraints.</span>
+      </div>
+
+      <div class="zones" id="zones">
+        <div class="zone" data-zone="offshore"><h4>Offshore</h4><div class="drop">Drop here</div></div>
+        <div class="zone" data-zone="nearshore"><h4>Nearshore</h4><div class="drop">Drop here</div></div>
+        <div class="zone" data-zone="intertidal"><h4>Intertidal</h4><div class="drop">Drop here</div></div>
+        <div class="zone" data-zone="backshore"><h4>Backshore</h4><div class="drop">Drop here</div></div>
+        <div class="zone" data-zone="built"><h4>Built / Hybrid</h4><div class="drop">Drop here</div></div>
+      </div>
+
+      <div class="meters">
+        <div class="meter"><label>Total attenuation</label><div class="barWrap"><div class="barFill" id="attBar"></div></div><small id="attText">0%</small></div>
+        <div class="meter"><label>Biodiversity</label><div class="barWrap"><div class="barFill" id="bioBar"></div></div><small id="bioText">0</small></div>
+        <div class="meter"><label>Water quality</label><div class="barWrap"><div class="barFill" id="wqBar"></div></div><small id="wqText">0</small></div>
+        <div class="meter"><label>Carbon</label><div class="barWrap"><div class="barFill" id="carbBar"></div></div><small id="carbText">0</small></div>
+      </div>
+
+      <table id="summary">
+        <thead><tr><th>Zone</th><th>Element</th><th>Atten. (%)</th><th>Width need (m)</th><th>Time (yr)</th><th>Biodiv</th><th>WQ</th><th>Carbon</th><th>Cost</th></tr></thead>
+        <tbody></tbody>
+        <tfoot><tr><th colspan="2">Totals</th><th id="sumAtt">0%</th><th id="sumWidth">0</th><th>—</th><th id="sumBio">0</th><th id="sumWQ">0</th><th id="sumCarb">0</th><th id="sumCost">0</th></tr></tfoot>
+      </table>
+
+      <div class="footer">
+        <button class="btn" id="reveal">👀 Reveal outcome</button>
+        <button class="btn secondary" id="reset">↺ Reset</button>
+        <div class="log" id="log"></div>
+      </div>
+    </main>
+  </div>
+
+<script>
+// ===== Data =====
+const TARGET_ATT = 40; // % wave reduction target
+let budget = 120; // budget cap
+
+// Cards: values are pedagogical, loosely inspired by slide ranges
+const CARDS = [
+  {id:'reef', name:'Coral/Artificial Reef', zone:'offshore', emoji:'🪸', atten:25, width:40, time:5, bio:3, wq:1, carb:1, cost:35, req:{light:70, sal:[25,35], inun:0}},
+  {id:'reef_sill', name:'Reef Sill (Hybrid)', zone:'offshore', emoji:'🧱', atten:20, width:30, time:1, bio:1, wq:0, carb:0, cost:28, req:{light:30, sal:[10,35], inun:0}},
+  {id:'seagrass', name:'Seagrass Meadow', zone:'nearshore', emoji:'🌿', atten:15, width:30, time:2, bio:3, wq:2, carb:2, cost:20, req:{light:60, sal:[20,35], inun:0}},
+  {id:'oyster', name:'Oyster Reef', zone:'nearshore', emoji:'🦪', atten:18, width:25, time:2, bio:2, wq:3, carb:1, cost:22, req:{light:40, sal:[10,35], inun:0}},
+  {id:'mangrove', name:'Mangrove Belt', zone:'intertidal', emoji:'🌳', atten:35, width:50, time:4, bio:3, wq:2, carb:3, cost:26, req:{light:40, sal:[5,35], inun:1}},
+  {id:'saltmarsh', name:'Saltmarsh', zone:'intertidal', emoji:'🪴', atten:20, width:40, time:3, bio:3, wq:2, carb:2, cost:18, req:{light:40, sal:[5,30], inun:1}},
+  {id:'dune', name:'Dune Ridge', zone:'backshore', emoji:'🏖️', atten:12, width:35, time:2, bio:1, wq:1, carb:1, cost:12, req:{light:20, sal:[0,35], inun:2}},
+  {id:'living', name:'Living Shoreline (Hybrid)', zone:'intertidal', emoji:'🧬', atten:22, width:35, time:2, bio:2, wq:2, carb:1, cost:24, req:{light:40, sal:[5,35], inun:1}},
+  {id:'breakwater', name:'Detached Breakwater', zone:'built', emoji:'🛡️', atten:30, width:0, time:1, bio:0, wq:0, carb:0, cost:38, req:{light:0, sal:[0,35], inun:0}},
+  {id:'revetment', name:'Revetment/Seawall', zone:'built', emoji:'🧱', atten:28, width:0, time:1, bio:0, wq:0, carb:0, cost:32, req:{light:0, sal:[0,35], inun:2}}
+];
+
+const ZONES = ['offshore','nearshore','intertidal','backshore','built'];
+const ZONE_LABEL = {offshore:'Offshore', nearshore:'Nearshore', intertidal:'Intertidal', backshore:'Backshore', built:'Built/Hybrid'};
+
+// Touch detection
+const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// Highlight the currently selected card
+function selectCardEl(el){
+  document.querySelectorAll('.card.selected').forEach(n=>n.classList.remove('selected'));
+  if(el){ el.classList.add('selected'); }
+}
+
+// ===== State =====
+let site = { light:70, sal:25, inun:1, width:60 };
+const placed = { offshore:[], nearshore:[], intertidal:[], backshore:[], built:[] };
+let selectedCard = null;
+
+// ===== Elements =====
+const deckEl = document.getElementById('deck');
+const zonesEl = document.getElementById('zones');
+const budgetBadge = document.getElementById('budgetBadge');
+const attBar = document.getElementById('attBar');
+const bioBar = document.getElementById('bioBar');
+const wqBar = document.getElementById('wqBar');
+const carbBar = document.getElementById('carbBar');
+const attText = document.getElementById('attText');
+const bioText = document.getElementById('bioText');
+const wqText = document.getElementById('wqText');
+const carbText = document.getElementById('carbText');
+const sumTbody = document.querySelector('#summary tbody');
+const sumAtt = document.getElementById('sumAtt');
+const sumWidth = document.getElementById('sumWidth');
+const sumBio = document.getElementById('sumBio');
+const sumWQ = document.getElementById('sumWQ');
+const sumCarb = document.getElementById('sumCarb');
+const sumCost = document.getElementById('sumCost');
+const logEl = document.getElementById('log');
+
+// Constraints UI
+const lightEl = document.getElementById('light');
+const salEl = document.getElementById('sal');
+const inunEl = document.getElementById('inun');
+const widthEl = document.getElementById('width');
+document.getElementById('lightVal').textContent = site.light;
+document.getElementById('salVal').textContent = site.sal;
+document.getElementById('inunVal').textContent = ['Offshore','Intertidal','Backshore'][site.inun];
+document.getElementById('widthVal').textContent = site.width;
+
+lightEl.addEventListener('input', ()=>{ site.light = +lightEl.value; document.getElementById('lightVal').textContent = site.light; renderDeck(); });
+salEl.addEventListener('input', ()=>{ site.sal = +salEl.value; document.getElementById('salVal').textContent = site.sal; renderDeck(); });
+inunEl.addEventListener('input', ()=>{ site.inun = +inunEl.value; document.getElementById('inunVal').textContent = ['Offshore','Intertidal','Backshore'][site.inun]; renderDeck(); });
+widthEl.addEventListener('input', ()=>{ site.width = +widthEl.value; document.getElementById('widthVal').textContent = site.width; renderDeck(); });
+
+// Buttons
+const revealBtn = document.getElementById('reveal');
+const resetBtn = document.getElementById('reset');
+revealBtn.addEventListener('click', revealOutcome);
+resetBtn.addEventListener('click', ()=> location.reload());
+
+// ===== Build UI =====
+renderDeck();
+buildZones();
+updateTotals();
+
+function renderDeck(){
+  deckEl.innerHTML='';
+  CARDS.forEach(c=>{
+    const playable = isPlayable(c);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.draggable = playable;
+    card.dataset.id = c.id;
+    card.innerHTML = `
+      <div class="emoji">${c.emoji}</div>
+      <div>
+        <h3>${c.name}</h3>
+        <small>${ZONE_LABEL[c.zone]} • Atten ${c.atten}% • Width ${c.width}m • Time ${c.time}yr</small>
+        <div style="display:flex; gap:6px; margin-top:6px">
+          <span class="chip">Bio ${c.bio}</span>
+          <span class="chip">WQ ${c.wq}</span>
+          <span class="chip">C ${c.carb}</span>
+        </div>
+      </div>
+      <div class="cost">$${c.cost}</div>`;
+    if(!playable){ card.style.opacity = .45; card.title = 'Not playable under current constraints'; }
+    card.addEventListener('dragstart', (e)=>{ selectedCard = c; selectCardEl(card); });
+    card.addEventListener('click', ()=>{ selectedCard = c; selectCardEl(card); flash(`Selected: ${c.name}. Click a matching zone to place.`); });
+    card.addEventListener('touchstart', (e)=>{ e.preventDefault(); selectedCard = c; selectCardEl(card); flash(`Selected: ${c.name}. Tap a matching zone to place.`); }, {passive:false});
+    card.addEventListener('click', ()=>{ selectedCard = c; flash(`Selected: ${c.name}. Drag to an appropriate zone.`); });
+    deckEl.appendChild(card);
+  });
+}
+
+function buildZones(){
+  document.querySelectorAll('.zone').forEach(z=>{
+    z.addEventListener('dragover', e=> e.preventDefault());
+    z.addEventListener('drop', (e)=>{ if(!selectedCard) return; placeCard(z.dataset.zone, selectedCard); });
+    // NEW: click/tap to place
+    z.addEventListener('click', ()=>{ if(!selectedCard) { flash('Select a card first.'); return; } placeCard(z.dataset.zone, selectedCard); });
+    z.addEventListener('touchend', (e)=>{ e.preventDefault(); if(!selectedCard) { flash('Select a card first.'); return; } placeCard(z.dataset.zone, selectedCard); }, {passive:false});
+  });
+}
+
+function isPlayable(card){
+  const okLight = site.light >= (card.req.light || 0);
+  const okSal = (!card.req.sal) || (site.sal >= card.req.sal[0] && site.sal <= card.req.sal[1]);
+  const okInun = (card.req.inun===undefined) || (card.req.inun===site.inun || (card.req.inun===1 && site.inun===0 && card.zone!=='backshore')); // allow intertidal cards at offshore with caution
+  const okWidth = site.width >= card.width;
+  return okLight && okSal && okInun && okWidth;
+}
+
+function placeCard(zone, c){
+  if(!isPlayable(c)){ flash(`${c.name} not playable given constraints`); return; }
+  if(c.zone!=='built' && zone==='built'){ flash(`${c.name} belongs in ${ZONE_LABEL[c.zone]}`); return; }
+  if(c.zone==='built' && zone!=='built'){ zone='built'; }
+  placed[zone].push(c);
+  addSlot(zone, c);
+  budget -= c.cost; if(budget<0) budget=0;
+  budgetBadge.textContent = `Budget: ${budget}`;
+  updateTotals();
+  // NEW: clear selection after placing
+  selectedCard = null;
+  selectCardEl(null);
+}
+
+function addSlot(zone, c){
+  const zoneEl = [...document.querySelectorAll('.zone')].find(n=> n.dataset.zone===zone);
+  const slot = document.createElement('div');
+  slot.className = 'slot';
+  slot.innerHTML = `<div class="icon">${c.emoji}</div><div><div class="name">${c.name}</div><div class="small">Atten ${c.atten}% • W ${c.width}m • T ${c.time}yr</div></div>`;
+  slot.title = 'Click to remove';
+  slot.addEventListener('click', ()=>{
+    // remove from zone
+    const arr = placed[zone];
+    const idx = arr.indexOf(c);
+    if(idx>-1){ arr.splice(idx,1); slot.remove(); budget += c.cost; budgetBadge.textContent = `Budget: ${budget}`; updateTotals(); }
+  });
+  zoneEl.appendChild(slot);
+}
+
+function totals(){
+  // Effective attenuation: sum with simple diminishing returns by zone stacking
+  let att=0, bio=0, wq=0, carb=0, cost=0, wneed=0;
+  for(const z of ZONES){
+    const arr = placed[z];
+    arr.forEach((c, i)=>{
+      const stackFactor = 1 / (1 + 0.2*i); // less marginal gain when stacking same zone
+      const maturity = Math.min(1, 1); // could add year slider; set 1 for now
+      att += c.atten * stackFactor * maturity;
+      bio += c.bio; wq += c.wq; carb += c.carb; cost += c.cost; wneed = Math.max(wneed, c.width);
+    })
+  }
+  return {att:Math.round(att), bio, wq, carb, cost, wneed};
+}
+
+function updateTotals(){
+  const t = totals();
+  // meters
+  attBar.style.width = Math.min(100, t.att) + '%';
+  bioBar.style.width = Math.min(100, (t.bio/12)*100) + '%';
+  wqBar.style.width = Math.min(100, (t.wq/12)*100) + '%';
+  carbBar.style.width = Math.min(100, (t.carb/12)*100) + '%';
+  attText.textContent = `${t.att}%`;
+  bioText.textContent = t.bio;
+  wqText.textContent = t.wq;
+  carbText.textContent = t.carb;
+
+  // table
+  sumTbody.innerHTML='';
+  for(const z of ZONES){
+    placed[z].forEach(c=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${ZONE_LABEL[z]}</td><td>${c.name}</td><td>${c.atten}</td><td>${c.width}</td><td>${c.time}</td><td>${c.bio}</td><td>${c.wq}</td><td>${c.carb}</td><td>${c.cost}</td>`;
+      sumTbody.appendChild(tr);
+    })
+  }
+  sumAtt.textContent = `${t.att}%`;
+  sumWidth.textContent = t.wneed;
+  sumBio.textContent = t.bio; sumWQ.textContent = t.wq; sumCarb.textContent = t.carb; sumCost.textContent = t.cost;
+
+  // goal colors
+  const goalOk = (t.att >= TARGET_ATT) && (t.cost <= 120);
+  attBar.style.background = `linear-gradient(90deg, ${goalOk? '#22c55e':'#f59e0b'}, ${goalOk? '#16a34a':'#f59e0b'})`;
+}
+
+function revealOutcome(){
+  const t = totals();
+  const okAtt = t.att >= TARGET_ATT;
+  const okBudget = t.cost <= 120;
+  const fairness = builtPenalty();
+  const score = Math.max(0, Math.round((okAtt?80:30) + (okBudget?40:0) + (t.bio+t.wq+t.carb) - fairness));
+  flash(`Outcome → Attenuation ${t.att}% (${okAtt?'✅ meets target':'❌ below target'}), Budget $${t.cost} (${okBudget?'✅ within':'❌ over'}), Co‑benefits ${t.bio+t.wq+t.carb}, Built penalty ${fairness}. Score ${score}.`);
+}
+
+function builtPenalty(){
+  // penalize over-reliance on built (encourage hybrids)
+  const nBuilt = placed.built.length;
+  return nBuilt>1? (nBuilt-1)*8 : 0;
+}
+
+function flash(msg){ logEl.textContent += (logEl.textContent?"\n":"") + msg; logEl.scrollTop = logEl.scrollHeight; }
+</script>
+</body>
+</html>
